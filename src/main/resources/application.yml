@@ -1,0 +1,11 @@
+
+spring:
+  application:
+    name: notice-view
+  data:
+    mongodb:
+      host: 152.67.210.205
+      port: 27017
+      database: dev_ajouin
+      username: root
+      password: Tnsmdrnrdj0258!
