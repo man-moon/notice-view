@@ -26,6 +26,7 @@ class NoticeController(
     ): NoticeResponse {
 
         val notice = noticeService.findNoticesByPaging(offset, limit, types, includeTopFixed)
+        logger.info { "notice 개수: ${notice.size}" }
 
         return NoticeResponse(notice)
     }
