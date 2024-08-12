@@ -1,44 +1,54 @@
 package com.ajouin.notice_view
 
+import com.ajouin.notice_view.domain.Notice
+import com.ajouin.notice_view.dto.BookmarkRequest
+import com.ajouin.notice_view.dto.NoticeResponse
 import com.ajouin.notice_view.dto.NoticeSnapshot
-import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PathVariable
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RequestParam
-import org.springframework.web.bind.annotation.RestController
-import java.time.LocalDateTime
+import com.ajouin.notice_view.dto.ReminderRequest
+import com.ajouin.notice_view.service.MemberService
+import com.ajouin.notice_view.service.NoticeService
+import org.springframework.http.ResponseEntity
+import org.springframework.web.bind.annotation.*
 
 @RestController
-@RequestMapping("/api/notices")
+@RequestMapping("/api/notice")
 class NoticeController(
     private val noticeService: NoticeService,
+    private val memberService: MemberService,
 ) {
 
-    // 공지사항 목록
-    // pathvariable: type
-    // paging: 20
     @GetMapping
-    fun getNotices(@RequestParam(required = false) type: List<Long>?): List<NoticeSnapshot> {
+    fun getNotice(
+        @RequestParam types: List<String>,
+        @RequestParam includeTopFixed: Boolean,
+        @RequestParam offset: Int,
+        @RequestParam limit: Int,
+    ): NoticeResponse {
 
-        val notices = noticeService.getNotices()
+        val notice = noticeService.findNoticesByPaging(offset, limit, types, includeTopFixed)
 
-        return listOf(
-            NoticeSnapshot(
-                isTopFixed = true,
-                createdAt = LocalDateTime.now(),
-                fetchId = 1,
-                id = 1,
-                title = "test",
-                noticeType = "test",
-                summary = "test"
-            )
-        )
+        return NoticeResponse(notice)
     }
 
-    // 공지사항 상세
-    // param: fetch_id
-    @GetMapping("/notices/{fetchId}")
-    fun getSpecificNotice(@PathVariable fetchId: Long) {
-
+    @GetMapping("/{id}")
+    fun getSpecificNotice(@PathVariable id: Long): Notice {
+        return noticeService.getSpecificNotice(id)
     }
+
+    @PostMapping("/bookmark")
+    fun getBookmarkNotice(@RequestBody bookmarkRequests: List<BookmarkRequest>): ResponseEntity<List<NoticeSnapshot>> {
+        val notices = bookmarkRequests.map {
+            noticeService.getNoticeSnapshotById(it.noticeId)
+        }
+        return ResponseEntity.ok(notices)
+    }
+
+    @PostMapping("/reminder")
+    fun getReminderNotice(@RequestBody reminderRequests: List<ReminderRequest>): ResponseEntity<List<NoticeSnapshot>> {
+        val notices = reminderRequests.map {
+            noticeService.getNoticeSnapshotById(it.noticeId)
+        }
+        return ResponseEntity.ok(notices)
+    }
+
 }
