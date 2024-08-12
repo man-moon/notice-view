@@ -25,6 +25,9 @@ class NoticeController(
         @RequestParam limit: Int,
     ): NoticeResponse {
 
+        logger.info { "공지사항 목록 요청" }
+        logger.info { "types: $types, includeTopFixed: $includeTopFixed, offset: $offset, limit: $limit" }
+
         val notice = noticeService.findNoticesByPaging(offset, limit, types, includeTopFixed)
         logger.info { "notice 개수: ${notice.size}" }
 
@@ -33,6 +36,7 @@ class NoticeController(
 
     @GetMapping("/{id}")
     fun getSpecificNotice(@PathVariable id: Long): Notice {
+        logger.info { "세부 공지사항 요청: $id" }
         return noticeService.getSpecificNotice(id)
     }
 
