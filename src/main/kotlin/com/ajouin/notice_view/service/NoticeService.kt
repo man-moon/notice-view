@@ -24,7 +24,6 @@ class NoticeService(
         val pageable = PageRequest.of(offset / 20, 20)
 
         val result = noticeRepository.findByAfterNoticeType(type, pageable)
-        println(result.size)
 
         return listOf(
             NoticeSnapshot(
@@ -45,11 +44,6 @@ class NoticeService(
         types: List<String>,
         includeTopFixed: Boolean
     ): List<NoticeSnapshot> {
-
-        println("offset: $offset")
-        println("limit: $limit")
-        println("types: $types")
-        println("includeTopFixed: $includeTopFixed")
 
         val noticeSnapshots = mutableListOf<NoticeSnapshot>()
 
