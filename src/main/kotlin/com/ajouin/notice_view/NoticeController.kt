@@ -5,7 +5,6 @@ import com.ajouin.notice_view.dto.BookmarkRequest
 import com.ajouin.notice_view.dto.NoticeResponse
 import com.ajouin.notice_view.dto.NoticeSnapshot
 import com.ajouin.notice_view.dto.ReminderRequest
-import com.ajouin.notice_view.service.MemberService
 import com.ajouin.notice_view.service.NoticeService
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
@@ -14,7 +13,6 @@ import org.springframework.web.bind.annotation.*
 @RequestMapping("/api/notice")
 class NoticeController(
     private val noticeService: NoticeService,
-    private val memberService: MemberService,
 ) {
 
     @GetMapping
