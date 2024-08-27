@@ -1,6 +1,7 @@
 package com.ajouin.notice_view.dto
 
 import java.time.LocalDateTime
+import java.util.*
 
 data class NoticeSnapshot(
     val isTopFixed: Boolean,
@@ -9,5 +10,6 @@ data class NoticeSnapshot(
     val id: Long,
     val title: String,
     val noticeType: String,
+    val date: Date,
     val summary: String
 )

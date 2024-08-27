@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
+import java.util.*
 
 @Service
 class NoticeService(
@@ -33,6 +34,7 @@ class NoticeService(
                 id = 1,
                 title = "test",
                 noticeType = "test",
+                date = Date(),
                 summary = "test"
             )
         )
@@ -83,6 +85,7 @@ class NoticeService(
                         id = it.id,
                         title = it.title,
                         noticeType = it.noticeType,
+                        date = it.date,
                         summary = it.summary
                     )
                 }
@@ -108,6 +111,7 @@ class NoticeService(
             id = notice.after.id,
             title = notice.after.title,
             noticeType = notice.after.noticeType,
+            date = notice.after.date,
             summary = notice.after.summary
         )
     }
