@@ -3,6 +3,7 @@ package com.ajouin.notice_view.domain
 import org.springframework.data.annotation.Id
 import org.springframework.data.mongodb.core.mapping.Document
 import org.springframework.data.mongodb.core.mapping.Field
+import java.time.LocalDateTime
 import java.util.*
 
 @Document(collection = "notice")
@@ -33,7 +34,7 @@ data class Notice(
         val content: String,
 
         @Field("date")
-        val date: Date,
+        val date: LocalDateTime,
 
         @Field("notice_type")
         val noticeType: String,
