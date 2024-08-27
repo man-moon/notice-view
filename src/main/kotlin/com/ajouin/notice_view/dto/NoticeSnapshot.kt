@@ -10,6 +10,6 @@ data class NoticeSnapshot(
     val id: Long,
     val title: String,
     val noticeType: String,
-    val date: LocalDateTime,
+    val date: Date,
     val summary: String
 )

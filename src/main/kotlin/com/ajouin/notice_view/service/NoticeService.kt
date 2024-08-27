@@ -34,7 +34,7 @@ class NoticeService(
                 id = 1,
                 title = "test",
                 noticeType = "test",
-                date = LocalDateTime.now(),
+                date = Date(),
                 summary = "test"
             )
         )
