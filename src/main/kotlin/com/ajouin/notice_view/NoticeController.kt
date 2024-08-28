@@ -1,10 +1,7 @@
 package com.ajouin.notice_view
 
 import com.ajouin.notice_view.domain.Notice
-import com.ajouin.notice_view.dto.BookmarkRequest
-import com.ajouin.notice_view.dto.NoticeResponse
-import com.ajouin.notice_view.dto.NoticeSnapshot
-import com.ajouin.notice_view.dto.ReminderRequest
+import com.ajouin.notice_view.dto.*
 import com.ajouin.notice_view.service.NoticeService
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
@@ -33,7 +30,7 @@ class NoticeController(
     }
 
     @GetMapping("/{id}")
-    fun getSpecificNotice(@PathVariable id: Long): Notice {
+    fun getSpecificNotice(@PathVariable id: Long): SpecificNoticeResponse {
         logger.info { "세부 공지사항 요청: $id" }
         return noticeService.getSpecificNotice(id)
     }

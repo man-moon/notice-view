@@ -2,6 +2,7 @@ package com.ajouin.notice_view.service
 
 import com.ajouin.notice_view.domain.Notice
 import com.ajouin.notice_view.dto.NoticeSnapshot
+import com.ajouin.notice_view.dto.SpecificNoticeResponse
 import com.ajouin.notice_view.repository.NoticeRepository
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
@@ -20,26 +21,6 @@ class NoticeService(
     private val mongoTemplate: MongoTemplate,
 ) {
 
-    fun getNotices(type: String, offset: Int, limit: Int): List<NoticeSnapshot> {
-
-        val pageable = PageRequest.of(offset / 20, 20)
-
-        val result = noticeRepository.findByAfterNoticeType(type, pageable)
-
-        return listOf(
-            NoticeSnapshot(
-                isTopFixed = true,
-                createdAt = LocalDateTime.now(),
-                fetchId = 1,
-                id = 1,
-                title = "test",
-                noticeType = "test",
-                date = Date(),
-                summary = "test"
-            )
-        )
-    }
-
     fun findNoticesByPaging(
         offset: Int,
         limit: Int,
@@ -50,7 +31,7 @@ class NoticeService(
         val noticeSnapshots = mutableListOf<NoticeSnapshot>()
 
         types.forEach { type ->
-            // 각 타입별로 상단 고정 공지를 가져옵니다.
+            // 각 타입별로 상단 고정 공지를 가져옴
             val topFixedNotices: List<Notice> = if (includeTopFixed) {
                 val topFixedQuery = Query().apply {
                     addCriteria(Criteria.where("after.noticeType").`is`(type))
@@ -62,17 +43,16 @@ class NoticeService(
                 emptyList()
             }
 
-            // 각 타입별로 상단 고정이 아닌 공지를 페이징 처리하여 최대 20개까지 가져옵니다.
+            // 각 타입별로 상단 고정이 아닌 공지를 페이징 처리하여 최대 20개까지 가져옴
             val generalNoticesQuery = Query().apply {
                 addCriteria(Criteria.where("after.noticeType").`is`(type))
                 addCriteria(Criteria.where("after.is_top_fixed").`is`(false))
                 with(Sort.by(Sort.Direction.DESC, "after.fetchId"))
-                skip(offset.toLong()) // 오프셋 설정
-                limit(limit) // 최대 limit개의 공지만 가져옴
+                skip(offset.toLong())
+                limit(limit)
             }
             val generalNoticesList = mongoTemplate.find(generalNoticesQuery, Notice::class.java)
 
-            // 가져온 공지사항들을 NoticeSnapshot으로 변환하여 리스트에 추가합니다.
             noticeSnapshots.addAll((topFixedNotices + generalNoticesList).mapNotNull { notice ->
                 notice.after?.let {
                     NoticeSnapshot(
@@ -85,7 +65,7 @@ class NoticeService(
                         id = it.id,
                         title = it.title,
                         noticeType = it.noticeType,
-                        date = it.date,
+                        date = convertDateToFormattedString(it.date),
                         summary = it.summary
                     )
                 }
@@ -95,8 +75,21 @@ class NoticeService(
         return noticeSnapshots
     }
 
-    fun getSpecificNotice(id: Long): Notice {
-        return noticeRepository.findByAfterId(id)
+    fun getSpecificNotice(id: Long): SpecificNoticeResponse {
+        val notice = noticeRepository.findByAfterId(id)
+        return SpecificNoticeResponse(
+            isTopFixed = notice.after!!.isTopFixed,
+            createdAt = notice.after.createdAt,
+            fetchId = notice.after.fetchId,
+            id = notice.after.id,
+            title = notice.after.title,
+            noticeType = notice.after.noticeType,
+            date = convertDateToFormattedString(notice.after.date),
+            summary = notice.after.summary,
+            content = notice.after.content,
+            html = notice.after.html,
+            originalUrl = notice.after.originalUrl
+        )
     }
 
     fun getNoticeSnapshotById(id: Long): NoticeSnapshot {
@@ -111,9 +104,15 @@ class NoticeService(
             id = notice.after.id,
             title = notice.after.title,
             noticeType = notice.after.noticeType,
-            date = notice.after.date,
+            date = convertDateToFormattedString(notice.after.date),
             summary = notice.after.summary
         )
+    }
+
+    private fun convertDateToFormattedString(date: Date): String {
+        val millis = date.time.div(1000)
+        val localDateTime = Instant.ofEpochMilli(millis).atZone(ZoneId.systemDefault()).toLocalDateTime()
+        return localDateTime.toLocalDate().toString()
     }
 
 }
