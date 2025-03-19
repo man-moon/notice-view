@@ -3,7 +3,6 @@ package com.ajouin.notice_view.service
 import com.ajouin.notice_view.domain.Notice
 import com.ajouin.notice_view.dto.NoticeSnapshot
 import com.ajouin.notice_view.dto.SpecificNoticeResponse
-import com.ajouin.notice_view.logger
 import com.ajouin.notice_view.repository.NoticeRepository
 import org.springframework.context.annotation.Primary
 import org.springframework.data.domain.Sort
@@ -56,7 +55,6 @@ class NoticeServiceV2(
                     limit(1)
                 }
                 val latestNotice = mongoTemplate.findOne(latestNoticeQuery, Notice::class.java)
-                logger.info { "${latestNotice?.after?.id}: ${latestNotice?.after?.title}, ${latestNotice?.tsMs}" }
                 // 최신 데이터가 still top-fixed인 경우만 포함
                 if (latestNotice?.after?.isTopFixed == true) latestNotice else null
             }
