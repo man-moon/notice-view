@@ -47,7 +47,7 @@ class NoticeService(
             val generalNoticesQuery = Query().apply {
                 addCriteria(Criteria.where("after.noticeType").`is`(type))
                 addCriteria(Criteria.where("after.is_top_fixed").`is`(false))
-                with(Sort.by(Sort.Direction.DESC, "after.fetchId"))
+                with(Sort.by(Sort.Direction.DESC, "after.id"))
                 skip(offset.toLong())
                 limit(limit)
             }
