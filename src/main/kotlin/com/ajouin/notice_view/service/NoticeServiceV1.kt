@@ -4,6 +4,7 @@ import com.ajouin.notice_view.domain.Notice
 import com.ajouin.notice_view.dto.NoticeSnapshot
 import com.ajouin.notice_view.dto.SpecificNoticeResponse
 import com.ajouin.notice_view.repository.NoticeRepository
+import org.springframework.context.annotation.Primary
 import org.springframework.data.domain.Sort
 import org.springframework.data.mongodb.core.MongoTemplate
 import org.springframework.data.mongodb.core.query.Criteria
@@ -15,6 +16,7 @@ import java.time.ZoneId
 import java.util.*
 
 @Service
+//@Primary
 class NoticeServiceV1(
     private val noticeRepository: NoticeRepository,
     private val mongoTemplate: MongoTemplate,

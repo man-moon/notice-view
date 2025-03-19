@@ -3,12 +3,11 @@ package com.ajouin.notice_view.service
 import com.ajouin.notice_view.domain.Notice
 import com.ajouin.notice_view.dto.NoticeSnapshot
 import com.ajouin.notice_view.dto.SpecificNoticeResponse
+import com.ajouin.notice_view.logger
 import com.ajouin.notice_view.repository.NoticeRepository
 import org.springframework.context.annotation.Primary
-import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
 import org.springframework.data.mongodb.core.MongoTemplate
-import org.springframework.data.mongodb.core.aggregation.Aggregation
 import org.springframework.data.mongodb.core.query.Criteria
 import org.springframework.data.mongodb.core.query.Query
 import org.springframework.stereotype.Service
@@ -36,30 +35,31 @@ class NoticeServiceV2(
         types.forEach { type ->
             // 상단 고정 공지 처리: 해당 타입의 데이터를 먼저 조회
             val topFixedNotices: List<Notice> = if (includeTopFixed) {
-                val topFixedQuery = Query().apply {
+                // 1단계: is_top_fixed가 true인 공지사항들을 먼저 조회
+                val initialTopFixedQuery = Query().apply {
                     addCriteria(Criteria.where("after.noticeType").`is`(type))
                     addCriteria(Criteria.where("after.is_top_fixed").`is`(true))
                     with(Sort.by(Sort.Direction.DESC, "after.fetchId"))
                 }
-                mongoTemplate.find(topFixedQuery, Notice::class.java)
+                mongoTemplate.find(initialTopFixedQuery, Notice::class.java)
             } else {
                 emptyList()
             }
 
-            // 조회된 상단 고정 공지의 after.id 목록 추출
+            // 2단계: 각 공지사항의 현재 상태 확인
             val ids = topFixedNotices.mapNotNull { it.after?.id }.distinct()
-
-            // Aggregation으로 각 after.id별 최신 데이터를 한 번에 조회하고, 최신 데이터의 is_top_fixed가 true인 경우만 선택
-            val aggregation = Aggregation.newAggregation(
-                Aggregation.match(Criteria.where("after.id").`in`(ids)),
-                Aggregation.sort(Sort.Direction.DESC, "tsMs"),
-                Aggregation.group("after.id")
-                    .first(Aggregation.ROOT).`as`("doc"),
-                Aggregation.replaceRoot("doc"),
-                Aggregation.match(Criteria.where("after.is_top_fixed").`is`(true))
-            )
-            val verifiedTopFixedNotices: List<Notice> =
-                mongoTemplate.aggregate(aggregation, "notice", Notice::class.java).mappedResults
+            val verifiedTopFixedNotices = ids.mapNotNull { id ->
+                // 각 ID에 대해 최신 데이터 조회
+                val latestNoticeQuery = Query().apply {
+                    addCriteria(Criteria.where("after.id").`is`(id))
+                    with(Sort.by(Sort.Direction.DESC, "tsMs"))
+                    limit(1)
+                }
+                val latestNotice = mongoTemplate.findOne(latestNoticeQuery, Notice::class.java)
+                logger.info { "${latestNotice?.after?.id}: ${latestNotice?.after?.title}, ${latestNotice?.tsMs}" }
+                // 최신 데이터가 still top-fixed인 경우만 포함
+                if (latestNotice?.after?.isTopFixed == true) latestNotice else null
+            }
 
             // 변환하여 결과에 추가
             noticeSnapshots.addAll(
