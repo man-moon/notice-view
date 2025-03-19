@@ -8,6 +8,7 @@ import org.springframework.context.annotation.Primary
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
 import org.springframework.data.mongodb.core.MongoTemplate
+import org.springframework.data.mongodb.core.aggregation.Aggregation
 import org.springframework.data.mongodb.core.query.Criteria
 import org.springframework.data.mongodb.core.query.Query
 import org.springframework.stereotype.Service
@@ -33,7 +34,7 @@ class NoticeServiceV2(
         val noticeSnapshots = mutableListOf<NoticeSnapshot>()
 
         types.forEach { type ->
-            // 각 타입별로 상단 고정 공지를 가져옴
+            // 상단 고정 공지 처리: 해당 타입의 데이터를 먼저 조회
             val topFixedNotices: List<Notice> = if (includeTopFixed) {
                 val topFixedQuery = Query().apply {
                     addCriteria(Criteria.where("after.noticeType").`is`(type))
@@ -45,7 +46,43 @@ class NoticeServiceV2(
                 emptyList()
             }
 
-            // 각 타입별로 상단 고정이 아닌 공지를 페이징 처리하여 최대 20개까지 가져옴
+            // 조회된 상단 고정 공지의 after.id 목록 추출
+            val ids = topFixedNotices.mapNotNull { it.after?.id }.distinct()
+
+            // Aggregation으로 각 after.id별 최신 데이터를 한 번에 조회하고, 최신 데이터의 is_top_fixed가 true인 경우만 선택
+            val aggregation = Aggregation.newAggregation(
+                Aggregation.match(Criteria.where("after.id").`in`(ids)),
+                Aggregation.sort(Sort.Direction.DESC, "tsMs"),
+                Aggregation.group("after.id")
+                    .first(Aggregation.ROOT).`as`("doc"),
+                Aggregation.replaceRoot("doc"),
+                Aggregation.match(Criteria.where("after.is_top_fixed").`is`(true))
+            )
+            val verifiedTopFixedNotices: List<Notice> =
+                mongoTemplate.aggregate(aggregation, "notice", Notice::class.java).mappedResults
+
+            // 변환하여 결과에 추가
+            noticeSnapshots.addAll(
+                verifiedTopFixedNotices.mapNotNull { notice ->
+                    notice.after?.let { after ->
+                        NoticeSnapshot(
+                            isTopFixed = after.isTopFixed,
+                            createdAt = LocalDateTime.ofInstant(
+                                Instant.ofEpochMilli(after.createdAt / 1000),
+                                ZoneId.systemDefault()
+                            ),
+                            fetchId = after.fetchId,
+                            id = after.id,
+                            title = after.title,
+                            noticeType = after.noticeType,
+                            date = convertDateToFormattedString(after.date),
+                            summary = after.summary
+                        )
+                    }
+                }
+            )
+
+            // 일반 공지 처리: 상단 고정이 아닌 공지에 대해 페이징 처리하여 조회
             val generalNoticesQuery = Query().apply {
                 addCriteria(Criteria.where("after.noticeType").`is`(type))
                 addCriteria(Criteria.where("after.is_top_fixed").`is`(false))
@@ -55,30 +92,26 @@ class NoticeServiceV2(
             }
             val generalNoticesList = mongoTemplate.find(generalNoticesQuery, Notice::class.java)
 
-            val combinedNotices = (topFixedNotices + generalNoticesList)
-                .filter { it.after != null }
-                .groupBy { it.after!!.id }
-                .map { (_, notices) ->
-                    notices.maxByOrNull { it.tsMs!! }
+            // 일반 공지를 NoticeSnapshot으로 변환 후 결과에 추가
+            noticeSnapshots.addAll(
+                generalNoticesList.mapNotNull { notice ->
+                    notice.after?.let { after ->
+                        NoticeSnapshot(
+                            isTopFixed = after.isTopFixed,
+                            createdAt = LocalDateTime.ofInstant(
+                                Instant.ofEpochMilli(after.createdAt / 1000),
+                                ZoneId.systemDefault()
+                            ),
+                            fetchId = after.fetchId,
+                            id = after.id,
+                            title = after.title,
+                            noticeType = after.noticeType,
+                            date = convertDateToFormattedString(after.date),
+                            summary = after.summary
+                        )
+                    }
                 }
-
-            noticeSnapshots.addAll(combinedNotices.mapNotNull { notice ->
-                notice?.after?.let {
-                    NoticeSnapshot(
-                        isTopFixed = it.isTopFixed,
-                        createdAt = LocalDateTime.ofInstant(
-                            Instant.ofEpochMilli(it.createdAt / 1000),
-                            ZoneId.systemDefault()
-                        ),
-                        fetchId = it.fetchId,
-                        id = it.id,
-                        title = it.title,
-                        noticeType = it.noticeType,
-                        date = convertDateToFormattedString(it.date),
-                        summary = it.summary
-                    )
-                }
-            })
+            )
         }
 
         return noticeSnapshots
