@@ -8,7 +8,9 @@ import java.util.*
 @Document(collection = "notice")
 data class Notice(
     @Id val id: String? = null,
-    val after: After? = null
+    val after: After? = null,
+    @Field("ts_ms")
+    val tsMs: Long? = null,
 ) {
     data class After(
         @Field("is_top_fixed")

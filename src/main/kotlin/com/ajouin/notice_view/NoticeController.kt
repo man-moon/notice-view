@@ -1,8 +1,8 @@
 package com.ajouin.notice_view
 
-import com.ajouin.notice_view.domain.Notice
 import com.ajouin.notice_view.dto.*
 import com.ajouin.notice_view.service.NoticeService
+import com.ajouin.notice_view.service.NoticeServiceV1
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 
@@ -18,6 +18,7 @@ class NoticeController(
         @RequestParam includeTopFixed: Boolean,
         @RequestParam offset: Int,
         @RequestParam limit: Int,
+
     ): NoticeResponse {
 
         logger.info { "공지사항 목록 요청" }
