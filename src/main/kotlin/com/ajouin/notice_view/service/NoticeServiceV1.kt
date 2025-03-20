@@ -77,7 +77,9 @@ class NoticeServiceV1(
     }
 
     override fun getSpecificNotice(id: Long): SpecificNoticeResponse {
-        val notice = noticeRepository.findByAfterId(id)
+        val notices = noticeRepository.findByAfterId(id)
+        val notice = notices.maxBy { it.tsMs!! }
+
         return SpecificNoticeResponse(
             isTopFixed = notice.after!!.isTopFixed,
             createdAt = notice.after.createdAt,
@@ -94,7 +96,9 @@ class NoticeServiceV1(
     }
 
     override fun getNoticeSnapshotById(id: Long): NoticeSnapshot {
-        val notice = noticeRepository.findByAfterId(id)
+        val notices = noticeRepository.findByAfterId(id)
+        val notice = notices.maxBy { it.tsMs!! }
+
         return NoticeSnapshot(
             isTopFixed = notice.after!!.isTopFixed,
             createdAt = LocalDateTime.ofInstant(

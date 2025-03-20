@@ -8,5 +8,5 @@ import org.springframework.stereotype.Repository
 @Repository
 interface NoticeRepository : MongoRepository<Notice, String> {
     fun findByAfterNoticeType(noticeType: String, pageable: Pageable): List<Notice>
-    fun findByAfterId(id: Long): Notice
+    fun findByAfterId(id: Long): List<Notice>
 }
