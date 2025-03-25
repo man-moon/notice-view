@@ -32,11 +32,15 @@ dependencies {
 	implementation("io.github.oshai:kotlin-logging-jvm:5.1.1")
 	implementation("org.springframework.cloud:spring-cloud-starter-bus-amqp")
 	implementation("org.springframework.cloud:spring-cloud-starter-config")
+
+	implementation("io.awspring.cloud:spring-cloud-aws-starter")
+	implementation("io.awspring.cloud:spring-cloud-aws-starter-sqs")
 }
 
 dependencyManagement {
 	imports {
 		mavenBom("org.springframework.cloud:spring-cloud-dependencies:${property("springCloudVersion")}")
+		mavenBom("io.awspring.cloud:spring-cloud-aws-dependencies:3.0.1")
 	}
 }
 
